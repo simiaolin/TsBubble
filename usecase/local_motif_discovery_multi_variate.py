@@ -24,7 +24,7 @@ PATH_DATASET = '../datasets/loco_motif_discovery/physical_therapy_dataset_Yurtma
 import locomotif.locomotif as locomotif
 from locomotif.locomotif import LoCoMotif, similarity_matrix_ndim, estimate_tau_from_am
 from locomotif.visualize import plot_motif_sets
-import example.idle_segments as iseg
+import tsbuble.idle_segments as iseg
 
 subjects = range(5, 6)
 exercises = range(1, 9)
