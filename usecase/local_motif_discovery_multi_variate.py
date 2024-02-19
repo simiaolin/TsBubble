@@ -360,7 +360,7 @@ def plot_bubble_of_one_dimension_old(motif_set_value, length_of_candidate,
                                  assoc_tab_new_paths, assoc_timeaxis_tab_new_paths, motif_set_length,
                                  shifts_right, shifts_middle, S_i):
     explain = ExplainKmeans(series=motif_set_value, span=(0, length_of_candidate), max_iter=None, k=1,
-                            dist_matrix=None, V=None, cluster_and_idx=None)
+                            dist_matrix=None, V=None, cluster_and_idx=None, align_info_provided = True)
     dtw_vertical_deviation, percent_v = explain.get_dtw_vertical_deviation_and_percent(motif_set_value[0],
                                                                                        assoc_tab_new_paths)
     dtw_horizontal_deviation, percent_h_l = \

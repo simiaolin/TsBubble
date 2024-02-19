@@ -187,10 +187,10 @@ for i, path in enumerate(induced_paths):
     ax_overlayed[0, 3].plot(np.arange(bm + shift_to_middle, em + shift_to_middle), series[bm:em, :], alpha = alpha)
     ax_overlayed[1, 3].plot(path[:, 0] + shift_to_middle, path[:, 1] - b, ls='-', marker='.', markersize=1, alpha=alpha)
 
-from examples.deprecated.explain_kmeans_dtw import ExplainKmeans
+# from examples.deprecated.explain_kmeans_dtw import ExplainKmeans
+from kmeas_dba import ExplainKmeans
 
-
-explain = ExplainKmeans(series = motif_set_value, span = (0, length_of_candidate), max_iter=None, k=1, dist_matrix=None, V = None, cluster_and_idx= None)
+explain = ExplainKmeans(series = motif_set_value, span = (0, length_of_candidate), max_iter=None, k=1, dist_matrix=None, V = None, cluster_and_idx= None, align_info_provided = True)
 dtw_vertical_deviation, percent_v = explain.get_dtw_vertical_deviation_and_percent(motif_set_value[0], assoc_tab_new_paths)
 dtw_horizontal_deviation, percent_h_l = \
     explain.get_dtw_horizontal_deviation_with_shifts(motif_set_value[0], assoc_timeaxis_tab_new_paths, np.zeros(len(motif_set_value)))

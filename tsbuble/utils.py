@@ -16,13 +16,14 @@ class AlignmentInfo:
         self.cur_series = cur_series
 class ExplanationBase:
 
-    def __init__(self, series, span, max_iter, k):
+    def __init__(self, series, span, max_iter, k, align_info_provided = False):
         self.series = series
         self.x = np.arange(span[0], span[1])
         self.dba_max_iter = max_iter
         self.span = span
         self.k = k
-        self.alignment_infos = self.get_alignment_infos(k)
+        if not align_info_provided:
+            self.alignment_infos = self.get_alignment_infos(k)
 
     def init_figure(fig):
 

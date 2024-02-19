@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 class ExplainKmeans(ExplanationBase):
-    def __init__(self, series, span, max_iter, k, dist_matrix, V, cluster_and_idx):
-        super().__init__(series, span, max_iter, k)
+    def __init__(self, series, span, max_iter, k, dist_matrix, V, cluster_and_idx, align_info_provided = False):
+        super().__init__(series, span, max_iter, k, align_info_provided)
         self.dist_matrix = dist_matrix
         self.V = V
         self.cluster_and_idx  = cluster_and_idx
