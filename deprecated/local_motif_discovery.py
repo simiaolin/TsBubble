@@ -160,10 +160,9 @@ ax_overlayed[1, 3].invert_yaxis()
 ax_overlayed[1, 3].set_ylim([e - b, 0])
 ax_overlayed[1, 3].set_xlim([(e - b) / 2 + (-max_length / 2 - 0.5) , (e - b) / 2 + (max_length /  2 + 0.5)])
 
-#
 # ax_overlayed[0, 4].set_xlim([(e - b) / 2 + (-max_length / 2 - 0.5) , (e - b) / 2 + (max_length /  2 + 0.5)])
 # ax_overlayed[0, 4].set_axis_off()
-#
+
 # ax_overlayed[1, 4].invert_yaxis()
 # ax_overlayed[1, 4].set_ylim([e - b, 0])
 # ax_overlayed[1, 4].set_xlim([(e - b) / 2 + (-max_length / 2 - 0.5) , (e - b) / 2 + (max_length /  2 + 0.5)])
@@ -189,7 +188,7 @@ for i, path in enumerate(induced_paths):
     ax_overlayed[1, 3].plot(path[:, 0] + shift_to_middle, path[:, 1] - b, ls='-', marker='.', markersize=1, alpha=alpha)
 
 # from examples.deprecated.explain_kmeans_dtw import ExplainKmeans
-from kmeans_dba import ExplainKmeans
+from kmeas_dba import ExplainKmeans
 
 explain = ExplainKmeans(series = motif_set_value, span = (0, length_of_candidate), max_iter=None, k=1, dist_matrix=None, V = None, cluster_and_idx= None, align_info_provided = True)
 dtw_vertical_deviation, percent_v = explain.get_dtw_vertical_deviation_and_percent(motif_set_value[0], assoc_tab_new_paths)

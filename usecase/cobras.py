@@ -8,9 +8,8 @@ from cobras_ts.querier.labelquerier import LabelQuerier
 import matplotlib.pyplot as plt
 import datetime as dt
 from queue import Queue
-import random
 from sklearn.metrics.cluster import adjusted_rand_score
-from tsbuble.utils import ExplanationBase
+from tsbubble.utils import ExplanationBase
 from matplotlib.patches import ConnectionPatch
 
 
@@ -250,16 +249,6 @@ class ExplainCobras(ExplanationBase):
                 )
             ax2.add_artist(cp)
 
-    def plot_constraint_link_chain(self):
-        idx1 = int(input("index1"))
-        idx2 = int(input("index2"))
-        cluster_idx_left, cluster_idx_right, repre_idx_left, repre_idx_right = self.get_cluster_and_representative_ids(
-            self.clustering, idx1, idx2
-            )
-        if cluster_idx_left == cluster_idx_right:
-            self.plot_musk_link_chain(cluster_idx_left, idx1, idx2, repre_idx_left, repre_idx_right)
-        else:
-            self.plot_cannot_link_chain(cluster_idx_left, cluster_idx_right, repre_idx_left, repre_idx_right, idx1, idx2)
 
     def plot_specific_dots_around_a_centroid(self):
         idx = int(input("centroid index"))

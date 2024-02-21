@@ -4,9 +4,7 @@
 import numpy as np
 import pandas as pd
 
-
 from examples.deprecated.explain_kmeans_dtw import ExplainKmeans
-
 import sys
 import altair as alt
 

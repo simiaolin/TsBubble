@@ -2,16 +2,14 @@ import os
 
 import numpy as np
 from dtaidistance.clustering.kmeans import KMeans
-from sklearn.metrics.cluster import adjusted_rand_score
-from .old_uni_util import ExplanationBase
+from tsbubble.utils import ExplanationBase
 from dtaidistance import dtw
 from examples.general.mst import mst
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 class ExplainKmeans(ExplanationBase):
-    def __init__(self, series, span, max_iter, k, dist_matrix, V, cluster_and_idx):
-        super().__init__(series, span, max_iter, k)
+    def __init__(self, series, span, max_iter, k, dist_matrix, V, cluster_and_idx, align_info_provided = False):
+        super().__init__(series, span, max_iter, k, align_info_provided)
         self.dist_matrix = dist_matrix
         self.V = V
         self.cluster_and_idx  = cluster_and_idx
@@ -36,25 +34,9 @@ class ExplainKmeans(ExplanationBase):
             predict_labels[np.array(list(cluster_and_idx[i]))] = i
         return predict_labels
 
-    def plot_constraint_link_chain(self):
-
-        idx1 = int(input("index1"))
-        idx2 = int(input("index2"))
-        result_chain, dist_chain = mst(idx1, idx2, self.dist_matrix, self.V)
-        fig2, axs2 = plt.subplots(len(result_chain), sharex=True, sharey=True)
-        fig2.suptitle('similarity chain')
-
-        for plot_idx in range(0, len(result_chain)):
-            series_id = result_chain[plot_idx]
-            cid = self.predicted_labels[series_id]
-            axs2[plot_idx].plot(self.x, series[series_id], color=self.color_arr[cid])
-            ylabel = "id: "+str(series_id)+ "\ncid: " + str(cid) if plot_idx == len(dist_chain) else "id: "+str(series_id)+ "\ncid: " + str(cid) + "\ndist: " + str(dist_chain[plot_idx])[:3]
-            ylabel = "\ndist: " + str(dist_chain[plot_idx])[:3] if plot_idx < len(dist_chain) else None
-            axs2[plot_idx].set_ylabel(ylabel, color= self.color_arr[cid], rotation=0, labelpad=15)
-            # axs2[plot_idx].tick_params(axis='y', labelrotation=90)
 if __name__ == '__main__':
     # configuration
-    ucr_path = '/Users/ary/Desktop/UCR_TS_Archive_2015'
+    ucr_path = '../datasets'
     dataset = 'CBF'
     window = 1
     num_of_series_to_test = 20
@@ -88,6 +70,6 @@ if __name__ == '__main__':
     print(result_chain, dist_chain)
     explain_kmeans = ExplainKmeans(series, (start, end), max_dba_it, k, dist_matrix=dists, V=num_of_series_to_test, cluster_and_idx=cluster_and_idx)
     # predicted_labels = explain_kmeans.get_predicted_label_from_kmeans_result(cluster_and_idx, num_of_series_to_test, k)
-    adjusted_rand_score = adjusted_rand_score(labels_true=labels, labels_pred=explain_kmeans.predicted_labels)
-    print("the adjust rand score for kmeans is: " + str(adjusted_rand_score))
+    # adjusted_rand_score = adjusted_rand_score(labels_true=labels, labels_pred=explain_kmeans.predicted_labels)
+    # print("the adjust rand score for kmeans is: " + str(adjusted_rand_score))
     explain_kmeans.explain_result(k)

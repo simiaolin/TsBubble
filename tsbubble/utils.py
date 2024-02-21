@@ -16,13 +16,14 @@ class AlignmentInfo:
         self.cur_series = cur_series
 class ExplanationBase:
 
-    def __init__(self, series, span, max_iter, k):
+    def __init__(self, series, span, max_iter, k, align_info_provided = False):
         self.series = series
         self.x = np.arange(span[0], span[1])
         self.dba_max_iter = max_iter
         self.span = span
         self.k = k
-        # self.alignment_infos = self.get_alignment_infos(k)
+        if not align_info_provided:
+            self.alignment_infos = self.get_alignment_infos(k)
 
     def init_figure(fig):
 
@@ -363,7 +364,6 @@ class ExplanationBase:
         plt.scatter(x_values, y_values, color='grey')
         plt.scatter(centroid_id, series_mean[centroid_id], color="red")
 
-
     def plot_deviations(self, plt, values, color, deviation_label):
         if self.span is None:
             plt.plot(self.x, values, color=color, label = deviation_label ,linewidth = 0.3)
@@ -377,8 +377,6 @@ class ExplanationBase:
         self.plot_deviations(ax4, eu_vertical_deviation, 'grey', "STD")
         self.plot_deviations(ax4, dtw_horizontal_deviation, 'green', "HWD")
 
-
-
     def plot_a_cluster(self, i):
         fig = plt.figure(i+1, dpi=300)
         ax2, ax3, ax4, ax5 = ExplanationBase.init_figure(fig)
@@ -388,38 +386,7 @@ class ExplanationBase:
         for i in range(cluster_size):
             self.plot_a_cluster(i)
             plt.tight_layout(pad=1, w_pad=1, h_pad=1)
-
         plt.show()
-        n_figure = cluster_size + 1
-        while True:
-            try:
-                question_type = int(input("please enter question type: 1.print index cloud 2.plot constraint links"))
-                if question_type != 1 and question_type != 2:
-                    print("please enter a number 1 or 2")
-                else:
-
-                    if question_type == 1:
-                        cluster_id = int(input("please enter cluster idx"))
-                        centroid_id = int(input("centroid index to plot the point cloud:"))
-                        plt.figure(n_figure)
-                        self.plot_points_aligned_to_a_given_centroid_index( cluster_id, centroid_id)
-                        n_figure += 1
-                        fig = plt.figure(n_figure)
-                        self.plot_single_bubble_around_dba(fig, cluster_id, centroid_id)
-                        n_figure += 1
-                        plt.show()
-
-                    if question_type == 2:
-                        self.plot_constraint_link_chain()
-                        plt.show()
-                        n_figure += 1
-            except Exception as e:
-                print(e)
-
-        plt.show()
-
-    def plot_constraint_link_chain(self):
-        pass
 
     def plot_points_aligned_to_a_given_centroid_index(self,  cluster_id, centroid_id):
 
