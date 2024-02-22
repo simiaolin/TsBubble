@@ -71,36 +71,16 @@ class ExplanationBase:
         ax5 = axs[4]
         ax6 = axs[5]
 
-        # plt.subplots_adjust()
-        # ax1 = fig.add_subplot(231)  # DBA
-        # ax1 = fig.add_subplot(611)  # adjusted dots
-        # ax2 = fig.add_subplot(612, sharex=ax1)  #to left
-        # ax3 = fig.add_subplot(613, sharex = ax1) # to right
-        # ax4 = fig.add_subplot(614, sharex=ax1)  # to middle
-        # ax5 = fig.add_subplot(615, sharex = ax1) # to optimal
-        # ax6 = fig.add_subplot(616, sharex = ax1) # all the deviations
-
         ax_overall = [ax1, ax2, ax3]
         ax_statistic = [ax4]
         axs = ax_overall + ax_statistic
 
-        # axis color
-        # for ax in axs:
-        #     ax.spines['bottom'].set_color('blue')
-
-        # for ax in ax_overall:
-        #     ax.spines['left'].set_color('pink')¡
-        # for ax in ax_statistic:
-        #     ax.spines['left'].set_color('yellow')
-        # ax4.set_xlabel("time index")
-        # ax1.set_ylabel("DBA", color="purple")
         ax1.set_title("All Instances", color="blue")
         ax2.set_title("Bubbles (warping to left)", color="blue", size = 5)
         ax3.set_title("Bubbles (warping to right)", color="blue", size = 5)
         ax4.set_title("Bubbles (warping to middle", color = 'blue', size = 5)
         ax5.set_title("Bubbles (warping to optimal)", color = 'blue', size = 5)
         ax6.set_title("All types of deviations", color="red", size = 5)
-        # ax5.set_ylabel("EU Deviation", color="gray")
         return ax1, ax2, ax3, ax4,ax5, ax6
 
 
@@ -119,14 +99,7 @@ class ExplanationBase:
     def plot_dba(self, plt, series_mean, vertical_deviation):
         if self.span is None:
             plt.plot(self.x, series_mean, color='purple',linewidth = 0.3)
-            # plt.fill_between(
-            #     self.x[self.span[0]: self.span[1]],
-            #     (series_mean + 3 * vertical_deviation)[self.span[0]: self.span[1]],
-            #     (series_mean - 3 * vertical_deviation)[self.span[0]: self.span[1]],
-            #     facecolor='grey',
-            #     edgecolor='orange',
-            #     alpha=0.3
-            #     )
+
         elif self.span[0] + 1 == self.span[1]:
             plt.scatter(self.x[self.span[0]], series_mean[self.span[0]],  color = 'purple')
         else:
@@ -150,7 +123,7 @@ class ExplanationBase:
                 ]
         for e in ells:
             plt.add_artist(e)
-    def plot_eclipse_and_percent_around_dba(self, plt, series_mean, dtw_horizontal_deviation, dtw_vertical_deviation, v_percent, h_percent, order):  #plotting elipses without overlapping among them.
+    def plot_eclipse_and_percent_around_dba(self, plt, series_mean, dtw_horizontal_deviation, dtw_vertical_deviation, v_percent, h_percent, order,  percentageOn = False):  #plotting elipses without overlapping among them.
         plt.plot(series_mean, color='purple' ,linewidth = 0.3)
         color_type_num = 10
         color_arr = cm.rainbow(np.linspace(0, 1, color_type_num))
@@ -160,13 +133,15 @@ class ExplanationBase:
                 for i in elipse_index_list
                 ]
 
-        textlist = [Text(i, series_mean[i],
-                         text  = 'h:'+"%.2f" % h_percent[i] + '\nv:' + "%.2f"%v_percent[i])
-                    for i in elipse_index_list]
+
         for e in ells:
             plt.add_artist(e)
-        for t in textlist:
-            plt.add_artist(t)
+        if percentageOn:
+            textlist = [Text(i, series_mean[i],
+                             text='h:' + "%.2f" % h_percent[i] + '\nv:' + "%.2f" % v_percent[i])
+                        for i in elipse_index_list]
+            for t in textlist:
+                plt.add_artist(t)
 
 
     def get_elipse_index_list(self,  hwd, vwd, order): #horizontal wraping deviation, vertical wraping deviation
@@ -214,7 +189,7 @@ class ExplanationBase:
                 len(all_values_aligned_to_current_idx)
                 ))
         return dtw_vertical_deviation
-    def get_dtw_vertical_deviation_and_percent(self, series_mean, assoc_tab):   ##should use the old mean or the new mean?
+    def get_vertical_deviation_and_percent(self, series_mean, assoc_tab):   ##should use the old mean or the new mean?
         dtw_vertical_deviation = np.empty(shape=series_mean.shape)
         dtw_v_percent = np.empty(shape=series_mean.shape)
         for i in range(len(series_mean)):

@@ -3,6 +3,7 @@ import os
 import numpy as np
 
 path_to_series = "../datasets/loco_motif_discovery/ecg-heartbeat-av.csv"
+# path_to_series = "/Users/ary/PycharmProjects/TsBubble/datasets/loco_motif_discovery/ecg-heartbeat-av.csv"
 f = open(path_to_series)
 series = np.array(f.readlines(), dtype=np.double)
 fs = 128  # sampling frequency
@@ -192,7 +193,7 @@ for i, path in enumerate(induced_paths):
 from kmeans_dba import ExplainKmeans
 
 explain = ExplainKmeans(series = motif_set_value, span = (0, length_of_candidate), max_iter=None, k=1, dist_matrix=None, V = None, cluster_and_idx= None, align_info_provided = True)
-dtw_vertical_deviation, percent_v = explain.get_dtw_vertical_deviation_and_percent(motif_set_value[0], assoc_tab_new_paths)
+dtw_vertical_deviation, percent_v = explain.get_vertical_deviation_and_percent(motif_set_value[0], assoc_tab_new_paths)
 dtw_horizontal_deviation, percent_h_l = \
     explain.get_dtw_horizontal_deviation_with_shifts(motif_set_value[0], assoc_timeaxis_tab_new_paths, np.zeros(len(motif_set_value)))
 dtw_h_to_right_d, percent_h_r = \
