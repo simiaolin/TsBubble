@@ -7,6 +7,7 @@ from kmeans_dba import ExplainKmeans
 import sys
 import matplotlib.pyplot as plt
 from tsbubble.ts_bubble import  TsBubble
+from motif_discovery import MotifDiscovery
 # import altair as alt
 #
 # alt.data_transformers.enable('default', max_rows=None)
@@ -15,7 +16,7 @@ from tsbubble.ts_bubble import  TsBubble
 # get_ipython().run_line_magic('matplotlib', 'inline')
 
 # plt.rcParams['figure.dpi'] = 200  # for both non-vector-graphics and rasterized vector-graphics figures
-class MotifDiscovery:
+class MotifDiscoveryMultivarite(MotifDiscovery):
 
     def datapreprocessing(self):
         PATH_DATASET = '../datasets/loco_motif_discovery/physical_therapy_dataset_Yurtman_Barshan'
@@ -86,40 +87,21 @@ class MotifDiscovery:
             motif_set_values_in_all_dimension[dim] = motif_set_value
 
         return series, motif_set_values_in_all_dimension, b, e, induced_paths
-    def mapping_preparing(self, series, induced_paths, n_of_timeseries, representative_size, b):
-        dim = series.shape[1]
-        assoc_tabs = [[[[] for _ in range(n_of_timeseries)] for _ in range(representative_size)] for _ in range(dim)]
 
-        # It is the same for different dimensions
-        assoc_timeaxis_tabs = [[[] for _ in range(n_of_timeseries)] for _ in range(representative_size)]
-        series_flip = series.transpose().reshape(-1)
-
-        for i, path in enumerate(induced_paths):
-            (bm, em) = path[0][0], path[-1][0]
-            for mapping in path:
-                assoc_timeaxis_tabs[mapping[1] - b][i].append(mapping[0] - bm)
-                for dim in np.arange(series.shape[1]):
-                    assoc_tabs[dim][mapping[1] - b][i].append(series_flip[mapping[0] + dim * series.shape[0]])
-
-        return assoc_tabs, assoc_timeaxis_tabs
-
-
-def main():
-    motif_discovery = MotifDiscovery()
+if __name__ == '__main__':
+    motif_discovery = MotifDiscoveryMultivarite()
     series, motif_set_values_in_all_dimension, b, e, induced_paths = motif_discovery.datapreprocessing()
     representative_size = e - b
     n_of_motifs = len(motif_set_values_in_all_dimension[0])
-    assoc_tabs, assoc_timeaxis_tabs = motif_discovery.mapping_preparing(series, induced_paths, n_of_motifs, representative_size, b)
+    assoc_tabs, assoc_timeaxis_tabs = motif_discovery.mapping_preparing(series, induced_paths, n_of_motifs,
+                                                                        representative_size, b)
 
     tsbubble_motif = TsBubble(representative_size)
     shifts_optimal = tsbubble_motif.find_the_optimal_shifts(assoc_timeaxis_tabs)
     for dim in np.arange(series.shape[1]):
         tsbubble_motif.plot_bubble_of_one_dimension(motif_set_values_in_all_dimension[dim], representative_size,
-                                 assoc_tabs[dim], assoc_timeaxis_tabs, n_of_motifs,
-                                  shifts_optimal)
-
-if __name__ == '__main__':
-    main()
+                                                    assoc_tabs[dim], assoc_timeaxis_tabs, n_of_motifs,
+                                                    shifts_optimal)
 
 
 
