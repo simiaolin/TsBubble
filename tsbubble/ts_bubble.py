@@ -7,10 +7,15 @@ from matplotlib.text  import Text
 import matplotlib.cm as cm
 import bisect
 
-class TsBubble():
-    def __init__(self, representative_length):
-        self.x = np.arange(0, representative_length)
+class AlignmentInfo:
+    def __init__(self, series_mean, original_idx, assoc_tab, assoc_timeaxis_tab, cur_series):
+        self.series_mean = series_mean
+        self.original_idx = original_idx
+        self.assoc_tab = assoc_tab
+        self.assoc_timeaxis_tab = assoc_timeaxis_tab
+        self.cur_series = cur_series
 
+class TsBubble():
 
     def find_the_optimal_shifts(self, assoc_timeaxis_tab_new_paths):
         number_of_instances = len(assoc_timeaxis_tab_new_paths[0])
@@ -36,6 +41,8 @@ class TsBubble():
                     shift_denominator += 1 / H_t[t] * current_align_cnt
 
             S_i[i] = shift_top / shift_denominator
+
+        S_i.insert(0, 0.0)
         return S_i
 
     def get_vertical_deviation_and_percent(self, series_mean, assoc_tab):   ##should use the old mean or the new mean?
@@ -63,7 +70,7 @@ class TsBubble():
         for i in range(len(series_mean)):
             all_timeaxis_assigned_to_current_idx = []
             for j, idxes in enumerate(assoc_timeaxis_tab[i]):
-                all_timeaxis_assigned_to_current_idx = np.append(all_timeaxis_assigned_to_current_idx, idxes + shifts[j])
+                all_timeaxis_assigned_to_current_idx = np.append(all_timeaxis_assigned_to_current_idx, idxes + shifts[j+1])
             current_div = np.sqrt(
                 np.divide(
                     np.sum(np.square(all_timeaxis_assigned_to_current_idx - i)),
@@ -166,15 +173,32 @@ class TsBubble():
         self.plot_eclipse_and_percent_around_dba(ax2, motif_set_value[0], dtw_h_to_optimal_d, dtw_vertical_deviation,
                                                     percent_v, percent_h_o, False)
 
-        ax3.plot(self.x, dtw_vertical_deviation, color='black', label='VWD', linewidth=0.3)
+        ax3.plot(np.arange(0, length_of_candidate), dtw_vertical_deviation, color='black', label='VWD', linewidth=0.3)
         ax3_twin = ax3.twinx()
         ax3_twin.spines['right'].set_color('purple')
         ax3_twin.spines['right'].set_linewidth(4)
-        ax3_twin.plot(self.x, dtw_h_to_optimal_d, color='purple', label='HWD_optimal', linewidth=2)
+        ax3_twin.plot(np.arange(0, length_of_candidate), dtw_h_to_optimal_d, color='purple', label='HWD_optimal', linewidth=2)
         plt.legend(loc='best')
         plt.show()
 
-    def mapping(self, series, induced_paths, n_of_timeseries, representative_size, b):
-        ...
-    def representative(self):
-        ...
+    def find_all_series_with_indices(self, series, indices):
+        target_series = list(map(lambda idx: series[idx], indices))
+        return target_series
+    def mapping(self, series, cluster_and_idx):
+        from dtaidistance import dtw_barycenter
+        alignment_infos = []
+        for cluster_idx in range(len(cluster_and_idx)):
+            cur_series = self.find_all_series_with_indices(
+                series, cluster_and_idx[cluster_idx]
+            )
+            #only support one dimension currently.
+            series_mean, original_idx, assoctab, assoc_timeaxis_tab = \
+                dtw_barycenter.dba_loop(
+                    s=cur_series, c=None, max_it=3, thr=0.001, mask=None, keep_averages=False,
+                    use_c=False, nb_initial_samples=None, nb_prob_samples=None, keep_assoc_tab=True
+                )
+
+            alignment_info = AlignmentInfo(series_mean, original_idx, assoctab, assoc_timeaxis_tab, cur_series)
+            alignment_infos.append(alignment_info)
+
+        return alignment_infos

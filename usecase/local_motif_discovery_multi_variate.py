@@ -3,7 +3,6 @@
 
 import numpy as np
 import pandas as pd
-from kmeans_dba import ExplainKmeans
 import sys
 import matplotlib.pyplot as plt
 from tsbubble.ts_bubble import  TsBubble
@@ -96,7 +95,7 @@ if __name__ == '__main__':
     assoc_tabs, assoc_timeaxis_tabs = motif_discovery.mapping_preparing(series, induced_paths, n_of_motifs,
                                                                         representative_size, b)
 
-    tsbubble_motif = TsBubble(representative_size)
+    tsbubble_motif = TsBubble()
     shifts_optimal = tsbubble_motif.find_the_optimal_shifts(assoc_timeaxis_tabs)
     for dim in np.arange(series.shape[1]):
         tsbubble_motif.plot_bubble_of_one_dimension(motif_set_values_in_all_dimension[dim], representative_size,
