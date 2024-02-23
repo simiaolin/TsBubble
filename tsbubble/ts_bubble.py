@@ -160,6 +160,19 @@ class TsBubble():
                                                                                        assoc_tab_new_paths)
         dtw_h_to_optimal_d, percent_h_o = \
             self.get_dtw_horizontal_deviation_with_shifts(motif_set_value[0], assoc_timeaxis_tab_new_paths, shifts_optimal)
+
+        variance_of_optimal_shifts = np.sum(np.square(dtw_h_to_optimal_d))
+
+        dtw_h_no_shifts, percent_h_o = \
+            self.get_dtw_horizontal_deviation_with_shifts(motif_set_value[0], assoc_timeaxis_tab_new_paths,
+                                                          [np.float64(0)] * len(shifts_optimal))
+        variance_of_no_shifts = np.sum(np.square(dtw_h_no_shifts))
+        print("the variance of optimal shifts: " + str(variance_of_optimal_shifts))
+
+        print("the variance without shifts: " + str(variance_of_no_shifts))
+
+        assert variance_of_optimal_shifts < variance_of_no_shifts
+
         fig, axs = plt.subplots(3, 1, dpi=200, sharex=True, figsize=(10, 10))
         ax1 = axs[0]
         ax2 = axs[1]
@@ -202,3 +215,4 @@ class TsBubble():
             alignment_infos.append(alignment_info)
 
         return alignment_infos
+
