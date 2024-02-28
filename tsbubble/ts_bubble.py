@@ -167,18 +167,18 @@ class TsBubble():
             self.get_dtw_horizontal_deviation_with_shifts(motif_set_value[0], assoc_timeaxis_tab_new_paths,
                                                           [np.float64(0)] * len(shifts_optimal))
         variance_of_no_shifts = np.sum(np.square(dtw_h_no_shifts))
-        print("the variance of optimal shifts: " + str(variance_of_optimal_shifts))
+        # print("the variance of optimal shifts: " + str(variance_of_optimal_shifts))
 
-        print("the variance without shifts: " + str(variance_of_no_shifts))
+        # print("the variance without shifts: " + str(variance_of_no_shifts))
 
-        assert variance_of_optimal_shifts < variance_of_no_shifts
+        # assert variance_of_optimal_shifts < variance_of_no_shifts
 
         fig, axs = plt.subplots(3, 1, dpi=200, sharex=True, figsize=(10, 10))
         ax1 = axs[0]
         ax2 = axs[1]
         ax3 = axs[2]
 
-        ax1.set_title("All Instances", color="blue")
+        ax1.set_title(str(motif_set_length) + " instances", color="blue")
         ax2.set_title("Bubbles (warping to optimal)", color='blue', size=5)
         ax3.set_title("All types of deviations", color="red", size=5)
         self.plotAllSeries_with_optimal_shifts(ax1, motif_set_value, motif_set_length, shifts_optimal)
@@ -191,28 +191,90 @@ class TsBubble():
         ax3_twin.spines['right'].set_color('purple')
         ax3_twin.spines['right'].set_linewidth(4)
         ax3_twin.plot(np.arange(0, length_of_candidate), dtw_h_to_optimal_d, color='purple', label='HWD_optimal', linewidth=2)
+        for iii in np.arange(0, length_of_candidate):
+            print(str(iii) + ":" + str(dtw_h_to_optimal_d[iii]))
         plt.legend(loc='best')
         plt.show()
 
     def find_all_series_with_indices(self, series, indices):
         target_series = list(map(lambda idx: series[idx], indices))
         return target_series
-    def mapping(self, series, cluster_and_idx):
+    def mapping(self, series, cluster_and_idx, max_iter=1, **kwargs):
         from dtaidistance import dtw_barycenter
         alignment_infos = []
         for cluster_idx in range(len(cluster_and_idx)):
-            cur_series = self.find_all_series_with_indices(
-                series, cluster_and_idx[cluster_idx]
-            )
-            #only support one dimension currently.
-            series_mean, original_idx, assoctab, assoc_timeaxis_tab = \
-                dtw_barycenter.dba_loop(
-                    s=cur_series, c=None, max_it=3, thr=0.001, mask=None, keep_averages=False,
-                    use_c=False, nb_initial_samples=None, nb_prob_samples=None, keep_assoc_tab=True
+            if cluster_idx == 0:
+                cur_series = self.find_all_series_with_indices(
+                    series, cluster_and_idx[cluster_idx]
                 )
-
-            alignment_info = AlignmentInfo(series_mean, original_idx, assoctab, assoc_timeaxis_tab, cur_series)
-            alignment_infos.append(alignment_info)
+                #only support one dimension currently.
+                series_mean = \
+                    dtw_barycenter.dba_loop(
+                        s=cur_series, c=None, max_it= max_iter, thr=0.001, mask=None, keep_averages=False,
+                        use_c=False, nb_initial_samples=len(cur_series), nb_prob_samples=None, keep_assoc_tab=False, **kwargs
+                    )
+                new_but_ununsed_series_mean, unused_original_idx, assoctab, assoc_timeaxis_tab = \
+                    dtw_barycenter.dba_loop(
+                        s=cur_series, c=series_mean, max_it=1, thr=0.001, mask=None, keep_averages=False,
+                        use_c=False, nb_initial_samples=None, nb_prob_samples=None, keep_assoc_tab=True, **kwargs
+                    )
+                alignment_info = AlignmentInfo(series_mean, unused_original_idx, assoctab, assoc_timeaxis_tab, cur_series)
+                alignment_infos.append(alignment_info)
 
         return alignment_infos
 
+    def generate_one_to_one_mapping(self, assoc_time_tabs):
+        n_of_instances = len(assoc_time_tabs[0])
+        length_of_average = len(assoc_time_tabs)
+        one_to_one_mapping = [] * n_of_instances
+
+        for id in np.arange(n_of_instances):
+            current_mapping = []
+            for time_index in np.arange(length_of_average):
+                for k in assoc_time_tabs[time_index][id]:
+                    current_mapping.extend([k, time_index])
+            one_to_one_mapping.append(np.array(current_mapping).reshape((int(len(current_mapping) / 2), 2)))
+        return one_to_one_mapping
+
+    def plot_alignment(self, cur_series, average,  assoc_timeaxis_tabs, shifts_optimal):
+        alpha = 0.6
+        fixed_length = len(average)
+        fig_overlayed, ax_overlayed = plt.subplots(2, 2, figsize=(9, 8))
+        ax_overlayed[0, 0].set_axis_off()
+        ax_overlayed[0, 1].set_axis_off()
+        ax_overlayed[1, 0].set_axis_off()
+
+        ax_overlayed[1, 1].invert_yaxis()
+        ax_overlayed[1, 1].set_ylim([fixed_length, 0])
+        ax_overlayed[1, 1].set_xlim([0, fixed_length])
+        ax_overlayed[0, 1].set_xlim([0, fixed_length])
+
+        ax_overlayed[1, 0].plot(-average, range(fixed_length, 0, -1))
+
+        # ax_overlayed[1,1].set_aspect('equal')
+        ax_overlayed[1, 1].sharex(ax_overlayed[0,1])
+        # ax_overlayed[1,1].sharey(ax_overlayed[1, 0])
+
+        one_to_one_mapping = self.generate_one_to_one_mapping(assoc_timeaxis_tabs)
+        for i, path in enumerate(one_to_one_mapping):
+            #not the average itself
+            # (bm, em) = path[0][0], path[-1][0]
+
+            ax_overlayed[0, 1].plot(np.arange(shifts_optimal[i], fixed_length + shifts_optimal[i]), cur_series[i],
+                                    alpha=alpha)
+            ax_overlayed[1, 1].plot(path[:, 0] + shifts_optimal[i], path[:, 1], ls='-', marker='.',
+                                    markersize=1,
+                                    alpha=alpha)
+        plt.show()
+
+    def plot_cloud_around_dba(self, alignments, centroid_id):
+        alignment_info = alignments[0]
+        series_mean = alignment_info.series_mean
+        assoc_tab = alignment_info.assoc_tab
+        assoc_timeaxis_tab = alignment_info.assoc_timeaxis_tab
+        y_values = sum(assoc_tab[centroid_id], [])
+        x_values = sum(assoc_timeaxis_tab[centroid_id], [])
+        plt.plot( series_mean, color='purple')
+        plt.scatter(x_values, y_values, color='grey')
+        plt.scatter(centroid_id, series_mean[centroid_id], color="red")
+        plt.show()

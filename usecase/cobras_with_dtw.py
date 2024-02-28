@@ -17,7 +17,7 @@ from matplotlib.patches import ConnectionPatch
 
 
 
-class COBRAS_DTW:
+class COBRAS_WITH_DTW:
     def find_all_indices_of_one_cluster(self, clustering_result, cluster_idx):
         superinstances = clustering_result[cluster_idx].super_instances
         indices_of_current_cluster = []
@@ -31,9 +31,9 @@ class COBRAS_DTW:
         budget = 50
         alpha = 0.5
         window = 10
-        iteration = 1
-        affinity_matrix_path = "/Users/ary/PycharmProjects/cobras/examples/affinities_permanent/" + dataset + ".pkl"
-        clustering_result_path = "/Users/ary/PycharmProjects/cobras/examples/clustering_result/" + dataset + "/" + str(
+
+        affinity_matrix_path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/affinity_matrix/" + dataset + ".pkl"
+        clustering_result_path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/clustering_result/" + dataset + "/" + str(
             budget) + ".pkl"
 
         # load the datas
@@ -77,7 +77,7 @@ class COBRAS_DTW:
                 f.close()
         else:
             print("creating new clustering result ...")
-            clusterer = COBRAS_DTW(affinities, LabelQuerier(labels), budget)
+            clusterer = COBRAS_DTW(affinities, LabelQuerier(labels), budget, dim = 1, series=series, labels=labels, explain_links_after_an_iteration=False)
             clustering, intermediate_clusterings, runtimes, ml, cl = clusterer.cluster()
             with open(clustering_result_path, "wb") as f:
                 pickle.dump(clustering, f)
@@ -87,27 +87,46 @@ class COBRAS_DTW:
         cluster_and_idx = dict()
         print("there are " + str(len(clustering.clusters)) + " clusters")
         for i in np.arange(len(clustering.clusters)):
-            cluster_and_idx[i] = set(self.find_all_indices_of_one_cluster(clustering.clusters, i))
+            cluster_and_idx[i] = self.find_all_indices_of_one_cluster(clustering.clusters, i)
         return series, cluster_and_idx
 
 from tsbubble.ts_bubble import TsBubble
 
 if __name__ == '__main__':
-    cobras_dtw = COBRAS_DTW()
+    cobras_dtw = COBRAS_WITH_DTW()
     series, cluster_and_idx = cobras_dtw.datapreprocessing()
     print(str(series.shape))
 
     ts_bubble_cobras_dtw = TsBubble()
-    alignments = ts_bubble_cobras_dtw.mapping(series, cluster_and_idx)
-
+    kw = {'penalty':  1}
+    alignments = ts_bubble_cobras_dtw.mapping(series,cluster_and_idx,  max_iter=1, **kw)
     for cls_id in np.arange(len(cluster_and_idx)):
         current_alignment_info = alignments[cls_id]
         average = current_alignment_info.series_mean
         assoc_tabs = current_alignment_info.assoc_tab
         assoc_timeaxis_tabs = current_alignment_info.assoc_timeaxis_tab
         cur_series = current_alignment_info.cur_series
-        shifts_optimal = ts_bubble_cobras_dtw.find_the_optimal_shifts(assoc_timeaxis_tabs)
+        # shifts_optimal = ts_bubble_cobras_dtw.find_the_optimal_shifts(assoc_timeaxis_tabs)
         all_time_series = [average] + cur_series
+        shifts_optimal = [np.float64(0)] * len(all_time_series)
         ts_bubble_cobras_dtw.plot_bubble_of_one_dimension(all_time_series, len(average),
                                                           assoc_tabs, assoc_timeaxis_tabs, len(all_time_series),
                                                           shifts_optimal)
+        ts_bubble_cobras_dtw.plot_alignment(cur_series, average, assoc_timeaxis_tabs, shifts_optimal)
+
+        while True:
+            selection = input("please select to show warping path or point cloud, 'c' for cloud and 'w' for warping ")
+            try:
+                if selection == 'c' or selection == "C":
+                    idx2 = int(input("index_id"))
+                    ts_bubble_cobras_dtw.plot_cloud_around_dba(alignments, idx2)
+                elif selection == 'w' or selection == "W":
+                    id  = int(input("timeseries_id"))
+                    import dtaidistance.dtw_visualisation as dtw_vis
+                    path = dtw.warping_path(cur_series[id], average, **kw)
+                    dtw_vis.plot_warping(cur_series[id], average, path)
+                    plt.show()
+                elif selection == 'b':
+                    break
+            except Exception as e:
+                print(e)
