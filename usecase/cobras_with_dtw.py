@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     ts_bubble_cobras_dtw = TsBubble()
     kw = {'penalty':  1}
-    alignments = ts_bubble_cobras_dtw.mapping(series,cluster_and_idx,  max_iter=1, **kw)
+    alignments = ts_bubble_cobras_dtw.mapping(series,cluster_and_idx,  max_iter=100, **kw)
     for cls_id in np.arange(len(cluster_and_idx)):
         current_alignment_info = alignments[cls_id]
         average = current_alignment_info.series_mean
@@ -124,7 +124,7 @@ if __name__ == '__main__':
                     id  = int(input("timeseries_id"))
                     import dtaidistance.dtw_visualisation as dtw_vis
                     path = dtw.warping_path(cur_series[id], average, **kw)
-                    dtw_vis.plot_warping(cur_series[id], average, path)
+                    dtw_vis.plot_warping_single_ax(cur_series[id], average, path)
                     plt.show()
                 elif selection == 'b':
                     break

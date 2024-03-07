@@ -83,7 +83,9 @@ if __name__ == '__main__':
                                                                         representative_size, b)
 
     tsbubble_motif = TsBubble()
-    shifts_optimal = tsbubble_motif.find_the_optimal_shifts(assoc_timeaxis_tabs)
+    shifts_optimal = tsbubble_motif.find_the_optimal_shifts(assoc_timeaxis_tabs)   #aras
+    # shifts_optimal = tsbubble_motif.find_the_optimal_independent_shifts(assoc_timeaxis_tabs) #simiao
+
     for dim in np.arange(series.shape[1]):
         tsbubble_motif.plot_bubble_of_one_dimension(motif_set_values_in_all_dimension[dim], representative_size,
                                                     assoc_tabs[dim], assoc_timeaxis_tabs, n_of_motifs,

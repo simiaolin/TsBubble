@@ -45,6 +45,22 @@ class TsBubble():
         S_i.insert(0, 0.0)
         return S_i
 
+    def find_the_optimal_independent_shifts(self, assoc_timeaxis_tab_new_paths):
+        number_of_instances = len(assoc_timeaxis_tab_new_paths[0])
+        S_i = [0] * number_of_instances
+        for i in np.arange(number_of_instances):
+
+            sum_difference = 0
+            cnt_difference = 0
+            for t in np.arange(len(assoc_timeaxis_tab_new_paths)):
+                current_mapping = assoc_timeaxis_tab_new_paths[t][i]
+                sum_difference += np.sum(t - current_mapping)
+                cnt_difference += len(current_mapping)
+
+            S_i[i] = sum_difference / cnt_difference
+        S_i.insert(0, 0.0)
+        return S_i
+
     def get_vertical_deviation_and_percent(self, series_mean, assoc_tab):   ##should use the old mean or the new mean?
         dtw_vertical_deviation = np.empty(shape=series_mean.shape)
         dtw_v_percent = np.empty(shape=series_mean.shape)
@@ -191,7 +207,8 @@ class TsBubble():
         ax3_twin.spines['right'].set_color('purple')
         ax3_twin.spines['right'].set_linewidth(4)
         ax3_twin.plot(np.arange(0, length_of_candidate), dtw_h_to_optimal_d, color='purple', label='HWD_optimal', linewidth=2)
-        for iii in np.arange(0, length_of_candidate):
+        # todo to remove
+        for iii in np.arange(80, 100):
             print(str(iii) + ":" + str(dtw_h_to_optimal_d[iii]))
         plt.legend(loc='best')
         plt.show()
