@@ -15,7 +15,8 @@ from matplotlib.patches import ConnectionPatch
 
 
 
-
+budget = 30
+dataset = 'CBF'
 
 class COBRAS_WITH_DTW:
     def find_all_indices_of_one_cluster(self, clustering_result, cluster_idx):
@@ -27,8 +28,8 @@ class COBRAS_WITH_DTW:
 
     def datapreprocessing(self):
         ucr_path = '/Users/ary/Desktop/UCR_TS_Archive_2015'
-        dataset = 'Trace'
-        budget = 50
+
+
         alpha = 0.5
         window = 10
 
@@ -39,7 +40,7 @@ class COBRAS_WITH_DTW:
         # load the datas
         data = np.loadtxt(os.path.join(ucr_path, dataset, dataset + '_TEST'), delimiter=',')
         data_train = np.loadtxt(os.path.join(ucr_path, dataset, dataset + '_TRAIN'), delimiter=',')
-        # data = np.vstack((data, data_train))
+        data = np.vstack((data, data_train))
         # labels = data[:, 0][:num_of_series_to_test]
         labels = data[:, 0]
         series = data[:, 1:]
@@ -98,9 +99,22 @@ if __name__ == '__main__':
     print(str(series.shape))
 
     ts_bubble_cobras_dtw = TsBubble()
-    kw = {'penalty':  1}
-    alignments = ts_bubble_cobras_dtw.mapping(series,cluster_and_idx,  max_iter=100, **kw)
+    # kw = {'penalty':  1}
+    alignment_path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/alignments/" +  dataset + "/" + str(budget) + ".pkl"
+    if exists(alignment_path):
+        print("alignment (mappings) already exists ...")
+        with open(alignment_path, "rb") as f:
+            alignments = pickle.load(f)
+            f.close()
+    else:
+        print("creating new alignments ...")
+        alignments = ts_bubble_cobras_dtw.mapping(series, cluster_and_idx, max_iter=100)
+        with open(alignment_path, "wb") as f:
+            pickle.dump(alignments, f)
+            f.close()
+
     for cls_id in np.arange(len(cluster_and_idx)):
+
         current_alignment_info = alignments[cls_id]
         average = current_alignment_info.series_mean
         assoc_tabs = current_alignment_info.assoc_tab
@@ -112,21 +126,21 @@ if __name__ == '__main__':
         ts_bubble_cobras_dtw.plot_bubble_of_one_dimension(all_time_series, len(average),
                                                           assoc_tabs, assoc_timeaxis_tabs, len(all_time_series),
                                                           shifts_optimal)
-        ts_bubble_cobras_dtw.plot_alignment(cur_series, average, assoc_timeaxis_tabs, shifts_optimal)
+        # ts_bubble_cobras_dtw.plot_alignment(cur_series, average, assoc_timeaxis_tabs, shifts_optimal)
 
-        while True:
-            selection = input("please select to show warping path or point cloud, 'c' for cloud and 'w' for warping ")
-            try:
-                if selection == 'c' or selection == "C":
-                    idx2 = int(input("index_id"))
-                    ts_bubble_cobras_dtw.plot_cloud_around_dba(alignments, idx2)
-                elif selection == 'w' or selection == "W":
-                    id  = int(input("timeseries_id"))
-                    import dtaidistance.dtw_visualisation as dtw_vis
-                    path = dtw.warping_path(cur_series[id], average, **kw)
-                    dtw_vis.plot_warping_single_ax(cur_series[id], average, path)
-                    plt.show()
-                elif selection == 'b':
-                    break
-            except Exception as e:
-                print(e)
+        # while True:
+        #     selection = input("please select to show warping path or point cloud, 'c' for cloud and 'w' for warping ")
+        #     try:
+        #         if selection == 'c' or selection == "C":
+        #             idx2 = int(input("index_id"))
+        #             ts_bubble_cobras_dtw.plot_cloud_around_dba(alignments, idx2)
+        #         elif selection == 'w' or selection == "W":
+        #             id  = int(input("timeseries_id"))
+        #             import dtaidistance.dtw_visualisation as dtw_vis
+        #             path = dtw.warping_path(cur_series[id], average, **kw)
+        #             dtw_vis.plot_warping_single_ax(cur_series[id], average, path)
+        #             plt.show()
+        #         elif selection == 'b':
+        #             break
+        #     except Exception as e:
+        #         print(e)

@@ -1,0 +1,56 @@
+
+    # configuration
+    ucr_path = '/Users/ary/Desktop/UCR_TS_Archive_2015'
+    dataset = 'Trace'
+    budget = 50
+    alpha = 0.5
+    window = 10
+    iteration = 1
+
+
+    Only time series in the test dataset is used!!!
+
+series shape = 275
+series number = 100
+dataset is Trace ... query budget is 50
+creating a new affinity matrix ...
+distance matrix use time 13
+clustering result already exists ...
+there are 4 clusters
+cluster 0, representative 48 indices [48, 51]
+cluster 0, representative 86 indices [86]
+cluster 0, representative 73 indices [29, 47, 73]
+cluster 0, representative 22 indices [15, 21, 22, 27, 64, 77]
+cluster 0, representative 39 indices [9, 35, 39, 44, 82, 99]
+cluster 0, representative 41 indices [41]
+0 : 6
+cluster 1, representative 49 indices [49, 59, 72]
+cluster 1, representative 26 indices [10, 13, 26, 62, 78, 94]
+cluster 1, representative 56 indices [2, 5, 14, 56, 98]
+cluster 1, representative 54 indices [54]
+cluster 1, representative 30 indices [12, 20, 28, 30, 90]
+cluster 1, representative 58 indices [40, 58, 95]
+cluster 1, representative 0 indices [0, 17, 60]
+cluster 1, representative 25 indices [25, 36]
+1 : 8
+cluster 2, representative 93 indices [6, 79, 84, 85, 93, 96]
+cluster 2, representative 75 indices [38, 52, 75]
+cluster 2, representative 63 indices [63, 80]
+cluster 2, representative 66 indices [31, 66, 68]
+cluster 2, representative 8 indices [8, 16, 33]
+cluster 2, representative 50 indices [45, 50, 97]
+cluster 2, representative 7 indices [7, 42, 43, 71, 76]
+cluster 2, representative 3 indices [3, 11, 24]
+cluster 2, representative 32 indices [32]
+2 : 9
+cluster 3, representative 92 indices [4, 34, 69, 88, 92]
+cluster 3, representative 89 indices [1, 57, 61, 65, 89]
+cluster 3, representative 23 indices [18, 19, 23, 37, 83, 87]
+cluster 3, representative 46 indices [46, 74]
+cluster 3, representative 55 indices [55, 70]
+cluster 3, representative 91 indices [91]
+cluster 3, representative 67 indices [67]
+cluster 3, representative 53 indices [53]
+cluster 3, representative 81 indices [81]
+3 : 9
+the adjust rand score for cobras is: 1.0

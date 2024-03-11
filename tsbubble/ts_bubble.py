@@ -112,8 +112,10 @@ class TsBubble():
 
         for new_idx in range(size):
             if new_idx == 0: # the centroid of the local motif case
-                x = np.arange(0, len(motif_set_value[new_idx]))
-                plt.plot(x, motif_set_value[new_idx], color = 'purple', linewidth = 2)
+                ...
+                # no longer plot the representative
+                # x = np.arange(0, len(motif_set_value[new_idx]))
+                # plt.plot(x, motif_set_value[new_idx], color = 'purple', linewidth = 2)
             else:
                 plt.plot(np.arange(shifts_optimal[new_idx], len(motif_set_value[new_idx]) + shifts_optimal[new_idx]), motif_set_value[new_idx], color=next(colors) ,linewidth = 0.3)
     def get_elipse_index_list(self,  hwd, vwd, order): #horizontal wraping deviation, vertical wraping deviation
@@ -148,7 +150,7 @@ class TsBubble():
         else:
             return False
     def plot_eclipse_and_percent_around_dba(self, plt, series_mean, dtw_horizontal_deviation, dtw_vertical_deviation, v_percent, h_percent, order,  percentageOn = False):  #plotting elipses without overlapping among them.
-        plt.plot(series_mean, color='purple' ,linewidth = 0.3)
+        plt.plot(series_mean, color='purple' ,linewidth = 2)
         color_type_num = 10
         color_arr = cm.rainbow(np.linspace(0, 1, color_type_num))
         elipse_index_list = self.get_elipse_index_list(hwd=dtw_horizontal_deviation, vwd=dtw_vertical_deviation, order=order)
@@ -194,23 +196,25 @@ class TsBubble():
         ax2 = axs[1]
         ax3 = axs[2]
 
-        ax1.set_title(str(motif_set_length) + " instances", color="blue")
-        ax2.set_title("Bubbles (warping to optimal)", color='blue', size=5)
-        ax3.set_title("All types of deviations", color="red", size=5)
+        ax1.set_title(str(motif_set_length - 1) + " instances")
+        ax2.set_title("TsBubble")
+        ax3.set_title("Deviations along value and time axes")
         self.plotAllSeries_with_optimal_shifts(ax1, motif_set_value, motif_set_length, shifts_optimal)
 
         self.plot_eclipse_and_percent_around_dba(ax2, motif_set_value[0], dtw_h_to_optimal_d, dtw_vertical_deviation,
                                                     percent_v, percent_h_o, False)
 
-        ax3.plot(np.arange(0, length_of_candidate), dtw_vertical_deviation, color='black', label='VWD', linewidth=0.3)
+        ln1 = ax3.plot(np.arange(0, length_of_candidate), dtw_vertical_deviation, color='black', label='VWD', linewidth=0.3)
         ax3_twin = ax3.twinx()
         ax3_twin.spines['right'].set_color('purple')
         ax3_twin.spines['right'].set_linewidth(4)
-        ax3_twin.plot(np.arange(0, length_of_candidate), dtw_h_to_optimal_d, color='purple', label='HWD_optimal', linewidth=2)
+        ln2 = ax3_twin.plot(np.arange(0, length_of_candidate), dtw_h_to_optimal_d, color='purple', label='HWD_optimal', linewidth=1)
         # todo to remove
-        for iii in np.arange(80, 100):
-            print(str(iii) + ":" + str(dtw_h_to_optimal_d[iii]))
-        plt.legend(loc='best')
+        # for iii in np.arange(80, 100):
+        #     print(str(iii) + ":" + str(dtw_h_to_optimal_d[iii]))
+        lns = ln1 + ln2
+        labs = [l.get_label() for l in lns]
+        ax3.legend(lns, labs, loc=0)
         plt.show()
 
     def find_all_series_with_indices(self, series, indices):
@@ -220,23 +224,22 @@ class TsBubble():
         from dtaidistance import dtw_barycenter
         alignment_infos = []
         for cluster_idx in range(len(cluster_and_idx)):
-            if cluster_idx == 0:
-                cur_series = self.find_all_series_with_indices(
-                    series, cluster_and_idx[cluster_idx]
+            cur_series = self.find_all_series_with_indices(
+                series, cluster_and_idx[cluster_idx]
+            )
+            #only support one dimension currently.
+            series_mean = \
+                dtw_barycenter.dba_loop(
+                    s=cur_series, c=None, max_it= max_iter, thr=0.001, mask=None, keep_averages=False,
+                    use_c=False, nb_initial_samples=int(0.1 * len(cur_series)), nb_prob_samples=None, keep_assoc_tab=False, **kwargs
                 )
-                #only support one dimension currently.
-                series_mean = \
-                    dtw_barycenter.dba_loop(
-                        s=cur_series, c=None, max_it= max_iter, thr=0.001, mask=None, keep_averages=False,
-                        use_c=False, nb_initial_samples=len(cur_series), nb_prob_samples=None, keep_assoc_tab=False, **kwargs
-                    )
-                new_but_ununsed_series_mean, unused_original_idx, assoctab, assoc_timeaxis_tab = \
-                    dtw_barycenter.dba_loop(
-                        s=cur_series, c=series_mean, max_it=1, thr=0.001, mask=None, keep_averages=False,
-                        use_c=False, nb_initial_samples=None, nb_prob_samples=None, keep_assoc_tab=True, **kwargs
-                    )
-                alignment_info = AlignmentInfo(series_mean, unused_original_idx, assoctab, assoc_timeaxis_tab, cur_series)
-                alignment_infos.append(alignment_info)
+            new_but_ununsed_series_mean, unused_original_idx, assoctab, assoc_timeaxis_tab = \
+                dtw_barycenter.dba_loop(
+                    s=cur_series, c=series_mean, max_it=1, thr=0.001, mask=None, keep_averages=False,
+                    use_c=False, nb_initial_samples=None, nb_prob_samples=None, keep_assoc_tab=True, **kwargs
+                )
+            alignment_info = AlignmentInfo(series_mean, unused_original_idx, assoctab, assoc_timeaxis_tab, cur_series)
+            alignment_infos.append(alignment_info)
 
         return alignment_infos
 
