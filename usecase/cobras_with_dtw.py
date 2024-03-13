@@ -15,8 +15,9 @@ from matplotlib.patches import ConnectionPatch
 
 
 
-budget = 30
+budget = 10
 dataset = 'CBF'
+portion = 0.1
 
 class COBRAS_WITH_DTW:
     def find_all_indices_of_one_cluster(self, clustering_result, cluster_idx):
@@ -100,7 +101,7 @@ if __name__ == '__main__':
 
     ts_bubble_cobras_dtw = TsBubble()
     # kw = {'penalty':  1}
-    alignment_path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/alignments/" +  dataset + "/" + str(budget) + ".pkl"
+    alignment_path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/alignments/" +  dataset + "/portion_" + str(portion) + "/"  + str(budget) + ".pkl"
     if exists(alignment_path):
         print("alignment (mappings) already exists ...")
         with open(alignment_path, "rb") as f:

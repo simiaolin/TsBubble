@@ -38,7 +38,7 @@ def show_clustering_info (clustering: Clustering):
            print("instance " + str(si.indices))
 
 def readPkl():
-    path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/clustering_result/CBF/10.pkl"
+    path = "/affinities_permanent/clustering_result/CBF/portion_0.05/10.pkl"
 
     fileread = open(path, 'rb')
     cls_1 = pickle.load(fileread)
