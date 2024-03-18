@@ -117,7 +117,7 @@ class TsBubble():
                 # x = np.arange(0, len(motif_set_value[new_idx]))
                 # plt.plot(x, motif_set_value[new_idx], color = 'purple', linewidth = 2)
             else:
-                plt.plot(np.arange(shifts_optimal[new_idx], len(motif_set_value[new_idx]) + shifts_optimal[new_idx]), motif_set_value[new_idx], color=next(colors) ,linewidth = 0.3)
+                plt.plot(shifts_optimal[new_idx] + np.arange(0, len(motif_set_value[new_idx])),  motif_set_value[new_idx], color=next(colors) ,linewidth = 0.3)
     def get_elipse_index_list(self,  hwd, vwd, order): #horizontal wraping deviation, vertical wraping deviation
         n = len(hwd)
         area = list(map(lambda i: hwd[i] * vwd[i],  range(n)))
@@ -169,9 +169,23 @@ class TsBubble():
             for t in textlist:
                 plt.add_artist(t)
 
+    def plot_eclipse_around_dba_of_different_dimensions(self, plt, series_mean, dtw_horizontal_deviation, dtw_vertical_deviation, order):  #plotting elipses without overlapping among them.
+        detected_dim = len(series_mean)
+        color_arr = cm.brg(np.linspace(0, 1, detected_dim))
+        for dim in np.arange(detected_dim):
+            plt.plot(series_mean[dim], color=color_arr[dim], zorder = 0)
+        for dim in np.arange(detected_dim):
+            elipse_index_list = self.get_elipse_index_list(hwd=dtw_horizontal_deviation, vwd=dtw_vertical_deviation[dim], order=order)
+            ells = [Ellipse(xy=(i, series_mean[dim][i]),
+                        width=dtw_horizontal_deviation[i], height=dtw_vertical_deviation[dim][i], color=color_arr[dim], alpha = 0.3, zorder=1)
+                for i in elipse_index_list
+                ]
+            for e in ells:
+                plt.add_artist(e)
+
 
     def plot_bubble_of_one_dimension(self, motif_set_value, length_of_candidate,
-                                     assoc_tab_new_paths, assoc_timeaxis_tab_new_paths, motif_set_length, shifts_optimal):
+                                     assoc_tab_new_paths, assoc_timeaxis_tab_new_paths, motif_set_length, shifts_optimal, lim_for_time_series=None, lim_for_vertical_deviation=None):
         # explain = ExplainKmeans(series=motif_set_value, span=(0, length_of_candidate - 1), max_iter=None, k=1,
         #                         dist_matrix=None, V=None, cluster_and_idx=None, align_info_provided=True)
         dtw_vertical_deviation, percent_v = self.get_vertical_deviation_and_percent(motif_set_value[0],
@@ -179,42 +193,100 @@ class TsBubble():
         dtw_h_to_optimal_d, percent_h_o = \
             self.get_dtw_horizontal_deviation_with_shifts(motif_set_value[0], assoc_timeaxis_tab_new_paths, shifts_optimal)
 
-        variance_of_optimal_shifts = np.sum(np.square(dtw_h_to_optimal_d))
+        # variance_of_optimal_shifts = np.sum(np.square(dtw_h_to_optimal_d))
 
-        dtw_h_no_shifts, percent_h_o = \
-            self.get_dtw_horizontal_deviation_with_shifts(motif_set_value[0], assoc_timeaxis_tab_new_paths,
-                                                          [np.float64(0)] * len(shifts_optimal))
-        variance_of_no_shifts = np.sum(np.square(dtw_h_no_shifts))
+        # dtw_h_no_shifts, percent_h_o = \
+        #     self.get_dtw_horizontal_deviation_with_shifts(motif_set_value[0], assoc_timeaxis_tab_new_paths,
+        #                                                   [np.float64(0)] * len(shifts_optimal))
+        # variance_of_no_shifts = np.sum(np.square(dtw_h_no_shifts))
         # print("the variance of optimal shifts: " + str(variance_of_optimal_shifts))
 
         # print("the variance without shifts: " + str(variance_of_no_shifts))
 
         # assert variance_of_optimal_shifts < variance_of_no_shifts
 
-        fig, axs = plt.subplots(3, 1, dpi=200, sharex=True, figsize=(10, 10))
+        fig, axs = plt.subplots(2, 1, dpi=200, sharex=True, figsize=(10, 10))
         ax1 = axs[0]
         ax2 = axs[1]
-        ax3 = axs[2]
+        # ax3 = axs[2]
 
-        ax1.set_title(str(motif_set_length - 1) + " instances")
-        ax2.set_title("TsBubble")
-        ax3.set_title("Deviations along value and time axes")
+        ax1.set_title(str(motif_set_length - 1) + " instances", fontsize = 12)
+        # ax1.set_title(str("20 instances"))
+        ax2.set_title("TsBubble",fontsize = 12)
+        # ax3.set_title("Deviations along value and time axes")
         self.plotAllSeries_with_optimal_shifts(ax1, motif_set_value, motif_set_length, shifts_optimal)
 
         self.plot_eclipse_and_percent_around_dba(ax2, motif_set_value[0], dtw_h_to_optimal_d, dtw_vertical_deviation,
                                                     percent_v, percent_h_o, False)
 
-        ln1 = ax3.plot(np.arange(0, length_of_candidate), dtw_vertical_deviation, color='black', label='VWD', linewidth=0.3)
-        ax3_twin = ax3.twinx()
-        ax3_twin.spines['right'].set_color('purple')
-        ax3_twin.spines['right'].set_linewidth(4)
-        ln2 = ax3_twin.plot(np.arange(0, length_of_candidate), dtw_h_to_optimal_d, color='purple', label='HWD_optimal', linewidth=1)
-        # todo to remove
+        # ln1 = ax3.plot(np.arange(0, length_of_candidate), dtw_vertical_deviation, color='black', label='VWD', linewidth=0.3)
+        # ax3_twin = ax3.twinx()
+        # ax3_twin.spines['right'].set_color('purple')
+        # ax3_twin.spines['right'].set_linewidth(4)
+        # ln2 = ax3_twin.plot(np.arange(0, length_of_candidate), dtw_h_to_optimal_d, color='purple', label='HWD', linewidth=1)
+        # # todo to remove
         # for iii in np.arange(80, 100):
         #     print(str(iii) + ":" + str(dtw_h_to_optimal_d[iii]))
-        lns = ln1 + ln2
-        labs = [l.get_label() for l in lns]
-        ax3.legend(lns, labs, loc=0)
+        # lns = ln1 + ln2
+        # labs = [l.get_label() for l in lns]
+        # ax3.legend(lns, labs, loc=0)
+
+        if lim_for_time_series is not None:
+            ax1.set_ylim(lim_for_time_series[0], lim_for_time_series[1])
+            ax2.set_ylim(lim_for_time_series[0], lim_for_time_series[1])
+        # if lim_for_vertical_deviation is not None:
+        #     ax3.set_ylim(lim_for_vertical_deviation[0], lim_for_vertical_deviation[1])
+        plt.show()
+
+    def  plot_bubble_of_multi_dimension(self, motif_set_value_in_all_dimensions, length_of_candidate,
+                                     assoc_tab_new_paths_in_all_dimensions, assoc_timeaxis_tab_new_paths, motif_set_length, shifts_optimal, lim_for_time_series=None, lim_for_vertical_deviation=None):
+        detect_dim = len(motif_set_value_in_all_dimensions)
+        vertical_deviation_list = []
+        average_list = []
+        for dim in np.arange(detect_dim):
+            average_list.append(motif_set_value_in_all_dimensions[dim][0])
+            dtw_vertical_deviation, _ = self.get_vertical_deviation_and_percent(motif_set_value_in_all_dimensions[dim][0],
+                                                                                       assoc_tab_new_paths_in_all_dimensions[dim])
+            vertical_deviation_list.append(dtw_vertical_deviation)
+        dtw_h_to_optimal_d, _ = \
+            self.get_dtw_horizontal_deviation_with_shifts(motif_set_value_in_all_dimensions[0][0], assoc_timeaxis_tab_new_paths, shifts_optimal)
+
+        fig, axs = plt.subplots(2, 1, dpi=200, sharex=True, figsize=(10, 10))
+        ax1 = axs[0]
+        ax2 = axs[1]
+        # ax3 = axs[2]
+
+        ax1.set_title(str(motif_set_length - 1) + " instances")
+        ax2.set_title("TsBubble")
+        # ax3.set_title("Deviations along value and time axes")
+
+        color_arr = cm.brg(np.linspace(0, 1, detect_dim))
+
+        for id in np.arange(1, motif_set_length):
+            for dim in np.arange(detect_dim):
+                ax1.plot(shifts_optimal[id] + np.arange(0, len(motif_set_value_in_all_dimensions[dim][id])),
+                         motif_set_value_in_all_dimensions[dim][id], color=color_arr[dim], linewidth=0.3)
+
+        self.plot_eclipse_around_dba_of_different_dimensions(ax2, average_list, dtw_h_to_optimal_d, vertical_deviation_list,False)
+
+        # lns = []
+        # for dim in np.arange(detect_dim):
+        #     current_lns = ax3.plot(np.arange(0, length_of_candidate), dtw_vertical_deviation, color= color_arr[dim], label='VWD_dim_' + str(dim), linewidth=0.5)
+        #     lns += current_lns
+        # ax3_twin = ax3.twinx()
+        # ax3_twin.spines['right'].set_color('black')
+        # ax3_twin.spines['right'].set_linewidth(4)
+        # ln2 = ax3_twin.plot(np.arange(0, length_of_candidate), dtw_h_to_optimal_d, color='black', label='HWD', linewidth=1)
+
+        # lns += ln2
+        # labs = [l.get_label() for l in lns]
+        # ax3.legend(lns, labs, loc=0)
+
+        if lim_for_time_series is not None:
+            ax1.set_ylim(lim_for_time_series[0], lim_for_time_series[1])
+            ax2.set_ylim(lim_for_time_series[0], lim_for_time_series[1])
+        # if lim_for_vertical_deviation is not None:
+        #     ax3.set_ylim(lim_for_vertical_deviation[0], lim_for_vertical_deviation[1])
         plt.show()
 
     def find_all_series_with_indices(self, series, indices):

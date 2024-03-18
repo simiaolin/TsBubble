@@ -12,6 +12,14 @@ class MotifDiscovery:
         ...
     def mapping_preparing(self, series, induced_paths, n_of_timeseries, representative_size, b):
         dim = series.shape[1]
+
+        #this modification is purely for motif discovery, where the time point of a normal motif could
+        #be mapped to a time point outside the candidate.
+        e = induced_paths[0][-1][0]
+        # preprocess the edge cases.
+        for path in induced_paths:
+            path[-1][1] = min(e, path[-1][1])
+        # end of the motification
         assoc_tabs = [[[[] for _ in range(n_of_timeseries - 1)] for _ in range(representative_size)] for _ in range(dim)]
 
         # It is the same for different dimensions

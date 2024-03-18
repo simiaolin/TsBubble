@@ -97,12 +97,40 @@ if __name__ == '__main__':
 
     tsbubble_motif = TsBubble()
     shifts_optimal = tsbubble_motif.find_the_optimal_shifts(assoc_timeaxis_tabs)
+
+    #pre process
+
+    lim_for_time_series = [sys.float_info.max, sys.float_info.min]
+    lim_for_vertical_deviation = [sys.float_info.max, sys.float_info.min]
+
+    # dtw_h_to_optimal_d, percent_h_o = \
+    #     tsbubble_motif.get_dtw_horizontal_deviation_with_shifts(motif_set_values_in_all_dimension[0][0],
+    #                                                             assoc_timeaxis_tabs, shifts_optimal)
+
     for dim in np.arange(series.shape[1]):
-        tsbubble_motif.plot_bubble_of_one_dimension(motif_set_values_in_all_dimension[dim], representative_size,
-                                                    assoc_tabs[dim], assoc_timeaxis_tabs, n_of_motifs,
-                                                    shifts_optimal)
 
+        for ts in motif_set_values_in_all_dimension[dim]:
+            lim_for_time_series[1] = max(lim_for_time_series[1], max(ts))
+            lim_for_time_series[0] = min(lim_for_time_series[0], min(ts))
 
+        dtw_vertical_deviation, _ = tsbubble_motif.get_vertical_deviation_and_percent(motif_set_values_in_all_dimension[dim][0],
+                                                                                    assoc_tabs[dim])
+        for i, timepoint in enumerate(motif_set_values_in_all_dimension[dim][0]):
+            lim_for_time_series[1] = max(lim_for_time_series[1], timepoint+dtw_vertical_deviation[i])
+            lim_for_time_series[0] = min(lim_for_time_series[0], timepoint-dtw_vertical_deviation[i])
+
+        lim_for_vertical_deviation[1] = max(lim_for_vertical_deviation[1], max(dtw_vertical_deviation))
+        lim_for_vertical_deviation[0] = min(lim_for_vertical_deviation[0], min(dtw_vertical_deviation))
+
+    #
+    # for dim in np.arange(series.shape[1]):
+    #     tsbubble_motif.plot_bubble_of_one_dimension(motif_set_values_in_all_dimension[dim], representative_size,
+    #                                                 assoc_tabs[dim], assoc_timeaxis_tabs, n_of_motifs,
+    #                                                 shifts_optimal, lim_for_time_series, lim_for_vertical_deviation)
+
+    tsbubble_motif.plot_bubble_of_multi_dimension(motif_set_values_in_all_dimension, representative_size,
+                                                  assoc_tabs, assoc_timeaxis_tabs, n_of_motifs,
+                                                  shifts_optimal, lim_for_time_series, lim_for_vertical_deviation)
 
 
 
