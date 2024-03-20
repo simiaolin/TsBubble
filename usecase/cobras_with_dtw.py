@@ -15,7 +15,6 @@ from matplotlib.patches import ConnectionPatch
 
 
 
-budget = 10
 dataset = 'CBF'
 portion = 0.1
 
@@ -27,7 +26,7 @@ class COBRAS_WITH_DTW:
             indices_of_current_cluster += superinstance.indices
         return indices_of_current_cluster
 
-    def datapreprocessing(self):
+    def datapreprocessing(self, budget):
         ucr_path = '/Users/ary/Desktop/UCR_TS_Archive_2015'
 
 
@@ -93,55 +92,108 @@ class COBRAS_WITH_DTW:
         return series, cluster_and_idx
 
 from tsbubble.ts_bubble import TsBubble
+import sys
+def find_lim_across_figure(budget_list):
+
+    lim_for_time_series = [sys.float_info.max, sys.float_info.min]
+    for budget in budget_list:
+
+        cobras_dtw = COBRAS_WITH_DTW()
+        series, cluster_and_idx = cobras_dtw.datapreprocessing(budget)
+
+        ts_bubble_cobras_dtw = TsBubble()
+        # kw = {'penalty':  1}
+        alignment_path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/alignments/" + dataset + "/portion_" + str(
+            portion) + "/" + str(budget) + ".pkl"
+        if exists(alignment_path):
+            print("alignment (mappings) already exists ...")
+            with open(alignment_path, "rb") as f:
+                alignments = pickle.load(f)
+                f.close()
+        else:
+            print("creating new alignments ...")
+            alignments = ts_bubble_cobras_dtw.mapping(series, cluster_and_idx, max_iter=100)
+            with open(alignment_path, "wb") as f:
+                pickle.dump(alignments, f)
+                f.close()
+
+        for cls_id in np.arange(len(cluster_and_idx)):
+            current_alignment_info = alignments[cls_id]
+            average = current_alignment_info.series_mean
+            assoc_tabs = current_alignment_info.assoc_tab
+            assoc_timeaxis_tabs = current_alignment_info.assoc_timeaxis_tab
+            cur_series = current_alignment_info.cur_series
+            # shifts_optimal = ts_bubble_cobras_dtw.find_the_optimal_shifts(assoc_timeaxis_tabs)
+            for ts in cur_series:
+
+                lim_for_time_series[1] = max(lim_for_time_series[1], max(ts))
+                lim_for_time_series[0] = min(lim_for_time_series[0], min(ts))
+
+            dtw_vertical_deviation, _ = ts_bubble_cobras_dtw.get_vertical_deviation_and_percent(
+                average,
+                assoc_tabs)
+            for i, timepoint in enumerate(average):
+                lim_for_time_series[1] = max(lim_for_time_series[1], timepoint + dtw_vertical_deviation[i])
+                lim_for_time_series[0] = min(lim_for_time_series[0], timepoint - dtw_vertical_deviation[i])
+
+    return lim_for_time_series
+
 
 if __name__ == '__main__':
-    cobras_dtw = COBRAS_WITH_DTW()
-    series, cluster_and_idx = cobras_dtw.datapreprocessing()
-    print(str(series.shape))
+    budget_list = [10, 30]
+    lim_for_time_series = find_lim_across_figure(budget_list)
 
-    ts_bubble_cobras_dtw = TsBubble()
+    for budget in budget_list:
+        cobras_dtw = COBRAS_WITH_DTW()
+        series, cluster_and_idx = cobras_dtw.datapreprocessing(budget)
+        print(str(series.shape))
+
+        ts_bubble_cobras_dtw = TsBubble()
     # kw = {'penalty':  1}
-    alignment_path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/alignments/" +  dataset + "/portion_" + str(portion) + "/"  + str(budget) + ".pkl"
-    if exists(alignment_path):
-        print("alignment (mappings) already exists ...")
-        with open(alignment_path, "rb") as f:
-            alignments = pickle.load(f)
-            f.close()
-    else:
-        print("creating new alignments ...")
-        alignments = ts_bubble_cobras_dtw.mapping(series, cluster_and_idx, max_iter=100)
-        with open(alignment_path, "wb") as f:
-            pickle.dump(alignments, f)
-            f.close()
+        alignment_path = "/Users/ary/PycharmProjects/TsBubble/affinities_permanent/alignments/" +  dataset + "/portion_" + str(portion) + "/"  + str(budget) + ".pkl"
+        if exists(alignment_path):
+            print("alignment (mappings) already exists ...")
+            with open(alignment_path, "rb") as f:
+                alignments = pickle.load(f)
+                f.close()
+        else:
+            print("creating new alignments ...")
+            alignments = ts_bubble_cobras_dtw.mapping(series, cluster_and_idx, max_iter=100)
+            with open(alignment_path, "wb") as f:
+                pickle.dump(alignments, f)
+                f.close()
 
-    for cls_id in np.arange(len(cluster_and_idx)):
+        save_fig_folder_name = '/Users/ary/PycharmProjects/TsBubble/results/cbf_' + str(
+            budget) + '_queries_initialization_0.1/'
 
-        current_alignment_info = alignments[cls_id]
-        average = current_alignment_info.series_mean
-        assoc_tabs = current_alignment_info.assoc_tab
-        assoc_timeaxis_tabs = current_alignment_info.assoc_timeaxis_tab
-        cur_series = current_alignment_info.cur_series
-        # shifts_optimal = ts_bubble_cobras_dtw.find_the_optimal_shifts(assoc_timeaxis_tabs)
-        all_time_series = [average] + cur_series
-        shifts_optimal = [np.float64(0)] * len(all_time_series)
-        ts_bubble_cobras_dtw.plot_bubble_of_one_dimension(all_time_series, len(average),
-                                                          assoc_tabs, assoc_timeaxis_tabs, len(all_time_series),
-                                                          shifts_optimal)
-        # ts_bubble_cobras_dtw.plot_alignment(cur_series, average, assoc_timeaxis_tabs, shifts_optimal)
+        for cls_id in np.arange(len(cluster_and_idx)):
+            current_alignment_info = alignments[cls_id]
+            average = current_alignment_info.series_mean
+            assoc_tabs = current_alignment_info.assoc_tab
+            assoc_timeaxis_tabs = current_alignment_info.assoc_timeaxis_tab
+            cur_series = current_alignment_info.cur_series
+            # shifts_optimal = ts_bubble_cobras_dtw.find_the_optimal_shifts(assoc_timeaxis_tabs)
+            all_time_series = [average] + cur_series
+            shifts_optimal = [np.float64(0)] * len(all_time_series)
 
-        # while True:
-        #     selection = input("please select to show warping path or point cloud, 'c' for cloud and 'w' for warping ")
-        #     try:
-        #         if selection == 'c' or selection == "C":
-        #             idx2 = int(input("index_id"))
-        #             ts_bubble_cobras_dtw.plot_cloud_around_dba(alignments, idx2)
-        #         elif selection == 'w' or selection == "W":
-        #             id  = int(input("timeseries_id"))
-        #             import dtaidistance.dtw_visualisation as dtw_vis
-        #             path = dtw.warping_path(cur_series[id], average, **kw)
-        #             dtw_vis.plot_warping_single_ax(cur_series[id], average, path)
-        #             plt.show()
-        #         elif selection == 'b':
-        #             break
-        #     except Exception as e:
-        #         print(e)
+            ts_bubble_cobras_dtw.plot_bubble_of_one_dimension(all_time_series, len(average), assoc_tabs,
+                                                              assoc_timeaxis_tabs, len(all_time_series), shifts_optimal,
+                                                              save_fig_name=save_fig_folder_name + str(cls_id + 1) + ".png", lim_for_time_series=lim_for_time_series)
+            # ts_bubble_cobras_dtw.plot_alignment(cur_series, average, assoc_timeaxis_tabs, shifts_optimal)
+
+            # while True:
+            #     selection = input("please select to show warping path or point cloud, 'c' for cloud and 'w' for warping ")
+            #     try:
+            #         if selection == 'c' or selection == "C":
+            #             idx2 = int(input("index_id"))
+            #             ts_bubble_cobras_dtw.plot_cloud_around_dba(alignments, idx2)
+            #         elif selection == 'w' or selection == "W":
+            #             id  = int(input("timeseries_id"))
+            #             import dtaidistance.dtw_visualisation as dtw_vis
+            #             path = dtw.warping_path(cur_series[id], average, **kw)
+            #             dtw_vis.plot_warping_single_ax(cur_series[id], average, path)
+            #             plt.show()
+            #         elif selection == 'b':
+            #             break
+            #     except Exception as e:
+            #         print(e)

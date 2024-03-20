@@ -5,6 +5,17 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.text  import Text
 import matplotlib.cm as cm
+import matplotlib
+font = {
+                # 'weight': 'bold',
+                'size': 22}
+figure_conf = {
+    'weight':'bold',
+    'titlesize':30
+}
+matplotlib.rc('font', **font)
+matplotlib.rc('figure', titlesize=30)
+# https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
 import bisect
 
 class AlignmentInfo:
@@ -118,42 +129,55 @@ class TsBubble():
                 # plt.plot(x, motif_set_value[new_idx], color = 'purple', linewidth = 2)
             else:
                 plt.plot(shifts_optimal[new_idx] + np.arange(0, len(motif_set_value[new_idx])),  motif_set_value[new_idx], color=next(colors) ,linewidth = 0.3)
-    def get_elipse_index_list(self,  hwd, vwd, order): #horizontal wraping deviation, vertical wraping deviation
+    def get_elipse_index_list(self, vwd, hwd, order, series_mean=None): #horizontal wraping deviation, vertical wraping deviation
         n = len(hwd)
         area = list(map(lambda i: hwd[i] * vwd[i],  range(n)))
         sort_index = np.argsort(area)   # small elipses rank first
         if not order:
             sort_index = np.flip(sort_index)  #bigger elipses rank first
-
-        #for the biggier elipses.
-
-        occupied_left_index_list = [float('-inf'), float('inf')]
-        occupied_right_index_list = [float('-inf'), float('inf')]
+        occupied_squares = []
         elipse_index_list = []
         for i in sort_index:
-            updated = self.try_insert_elipse(occupied_left_index_list, occupied_right_index_list ,new_index=i, width=hwd[i])
-            if updated:
-                elipse_index_list.append(i)
+            self.try_insert_elipse(occupied_squares, new_index=i, value=series_mean[i], r_height=vwd[i], r_width=hwd[i], elipse_index_list=elipse_index_list)
         return elipse_index_list
 
-    def try_insert_elipse(self, occupied_left_index_list, occupied_right_index_list, new_index, width):
-        left = new_index - width
-        right = new_index + width
-        index = bisect.bisect_right(occupied_left_index_list, left)
+    def try_insert_elipse(self, occupied_squares, new_index, value, r_height, r_width, elipse_index_list):
+        cur_left_most = new_index - r_width
+        cur_right_most = new_index + r_width
 
-        last_right = occupied_right_index_list[index - 1]
-        next_left = occupied_left_index_list[index]
-        if left >= last_right and right <= next_left:
-            occupied_left_index_list.insert(index, left)
-            occupied_right_index_list.insert(index, right)
-            return True
+        cur_up_most = value + r_height
+        cur_bottom_most = value - r_height
+
+        # index = bisect.bisect_right(occupied_left_index_list, left)
+        #
+        # last_right = occupied_right_index_list[index - 1]
+        # next_left = occupied_left_index_list[index]
+        if len(occupied_squares) == 0:
+            occupied_squares.append([cur_left_most, cur_right_most, cur_up_most, cur_bottom_most])
+            elipse_index_list.append(new_index)
         else:
-            return False
+
+            flag = True
+            for covered_square in occupied_squares:
+                cur_corners = [(new_index - r_width, value - r_height),
+                               (new_index + r_width, value - r_height),
+                               (new_index - r_width, value + r_height),
+                               (new_index + r_width, value + r_height)
+                               ]
+                for cur_corner in cur_corners:
+                    if  covered_square[0] < cur_corner[0] < covered_square[1] and covered_square[3] < cur_corner[1] < covered_square[2]:
+                        flag = False
+                        break
+            if flag == True:
+                occupied_squares.append([cur_left_most, cur_right_most, cur_up_most, cur_bottom_most])
+                elipse_index_list.append(new_index)
+
     def plot_eclipse_and_percent_around_dba(self, plt, series_mean, dtw_horizontal_deviation, dtw_vertical_deviation, v_percent, h_percent, order,  percentageOn = False):  #plotting elipses without overlapping among them.
         plt.plot(series_mean, color='purple' ,linewidth = 2)
         color_type_num = 10
         color_arr = cm.rainbow(np.linspace(0, 1, color_type_num))
-        elipse_index_list = self.get_elipse_index_list(hwd=dtw_horizontal_deviation, vwd=dtw_vertical_deviation, order=order)
+        elipse_index_list = self.get_elipse_index_list(vwd=dtw_vertical_deviation, hwd=dtw_horizontal_deviation,
+                                                       order=order, series_mean=series_mean)
         ells = [Ellipse(xy=(i, series_mean[i]),
                         width=dtw_horizontal_deviation[i], height=dtw_vertical_deviation[i], color=color_arr[i%color_type_num])
                 for i in elipse_index_list
@@ -175,7 +199,8 @@ class TsBubble():
         for dim in np.arange(detected_dim):
             plt.plot(series_mean[dim], color=color_arr[dim], zorder = 0)
         for dim in np.arange(detected_dim):
-            elipse_index_list = self.get_elipse_index_list(hwd=dtw_horizontal_deviation, vwd=dtw_vertical_deviation[dim], order=order)
+            elipse_index_list = self.get_elipse_index_list(vwd=dtw_vertical_deviation[dim],
+                                                           hwd=dtw_horizontal_deviation, order=order, series_mean=series_mean[dim])
             ells = [Ellipse(xy=(i, series_mean[dim][i]),
                         width=dtw_horizontal_deviation[i], height=dtw_vertical_deviation[dim][i], color=color_arr[dim], alpha = 0.3, zorder=1)
                 for i in elipse_index_list
@@ -184,8 +209,9 @@ class TsBubble():
                 plt.add_artist(e)
 
 
-    def plot_bubble_of_one_dimension(self, motif_set_value, length_of_candidate,
-                                     assoc_tab_new_paths, assoc_timeaxis_tab_new_paths, motif_set_length, shifts_optimal, lim_for_time_series=None, lim_for_vertical_deviation=None):
+    def plot_bubble_of_one_dimension(self, motif_set_value, length_of_candidate, assoc_tab_new_paths,
+                                     assoc_timeaxis_tab_new_paths, motif_set_length, shifts_optimal, save_fig_name=None,
+                                     lim_for_time_series=None):
         # explain = ExplainKmeans(series=motif_set_value, span=(0, length_of_candidate - 1), max_iter=None, k=1,
         #                         dist_matrix=None, V=None, cluster_and_idx=None, align_info_provided=True)
         dtw_vertical_deviation, percent_v = self.get_vertical_deviation_and_percent(motif_set_value[0],
@@ -210,9 +236,9 @@ class TsBubble():
         ax2 = axs[1]
         # ax3 = axs[2]
 
-        ax1.set_title(str(motif_set_length - 1) + " instances", fontsize = 12)
+        ax1.set_title(str(motif_set_length - 1) + " instances", weight='bold')
         # ax1.set_title(str("20 instances"))
-        ax2.set_title("TsBubble",fontsize = 12)
+        ax2.set_title("TsBubble", weight='bold')
         # ax3.set_title("Deviations along value and time axes")
         self.plotAllSeries_with_optimal_shifts(ax1, motif_set_value, motif_set_length, shifts_optimal)
 
@@ -236,10 +262,13 @@ class TsBubble():
             ax2.set_ylim(lim_for_time_series[0], lim_for_time_series[1])
         # if lim_for_vertical_deviation is not None:
         #     ax3.set_ylim(lim_for_vertical_deviation[0], lim_for_vertical_deviation[1])
-        plt.show()
+
+        plt.savefig(save_fig_name, bbox_inches='tight',  pad_inches = 0)
 
     def  plot_bubble_of_multi_dimension(self, motif_set_value_in_all_dimensions, length_of_candidate,
-                                     assoc_tab_new_paths_in_all_dimensions, assoc_timeaxis_tab_new_paths, motif_set_length, shifts_optimal, lim_for_time_series=None, lim_for_vertical_deviation=None):
+                                        assoc_tab_new_paths_in_all_dimensions, assoc_timeaxis_tab_new_paths,
+                                        motif_set_length, shifts_optimal, lim_for_time_series=None,
+                                        lim_for_vertical_deviation=None, save_fig_file_name=None):
         detect_dim = len(motif_set_value_in_all_dimensions)
         vertical_deviation_list = []
         average_list = []
@@ -256,8 +285,8 @@ class TsBubble():
         ax2 = axs[1]
         # ax3 = axs[2]
 
-        ax1.set_title(str(motif_set_length - 1) + " instances")
-        ax2.set_title("TsBubble")
+        ax1.set_title(str(motif_set_length - 1) + " instances",  weight='bold')
+        ax2.set_title("TsBubble",  weight='bold')
         # ax3.set_title("Deviations along value and time axes")
 
         color_arr = cm.brg(np.linspace(0, 1, detect_dim))
@@ -287,7 +316,7 @@ class TsBubble():
             ax2.set_ylim(lim_for_time_series[0], lim_for_time_series[1])
         # if lim_for_vertical_deviation is not None:
         #     ax3.set_ylim(lim_for_vertical_deviation[0], lim_for_vertical_deviation[1])
-        plt.show()
+        plt.savefig(save_fig_file_name)
 
     def find_all_series_with_indices(self, series, indices):
         target_series = list(map(lambda idx: series[idx], indices))
